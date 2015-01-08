@@ -1,5 +1,7 @@
 package com.github.arteam.changes.watcher;
 
+import com.github.arteam.changes.watcher.conf.Config;
+import com.github.arteam.changes.watcher.conf.RemoteTarget;
 import org.dumb.yaml.Yaml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +44,9 @@ public class Main {
             configLocation = args[0];
         }
         Config config = new Yaml().parse(new File(configLocation), Config.class);
-        log.info("Connecting to a remote host: " + config.host);
-        sshGateway.connect(config.host, config.username, config.password);
+        RemoteTarget remote = config.remote;
+        log.info("Connecting to a remote host: " + remote.host);
+        sshGateway.connect(remote.host, remote.username, remote.password);
         log.info("Done!");
 
         WatchService watchService = FileSystems.getDefault().newWatchService();
@@ -69,7 +72,7 @@ public class Main {
                 if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                     // Get absolute path of changed source file
                     String sourcePath = paths.get(watchKey).resolve(eventPath).toString();
-                    String remotePath = sourcePath.replaceAll(config.monitoredDirectory, config.remoteBaseDirectory);
+                    String remotePath = sourcePath.replaceAll(config.monitoredDirectory, remote.remoteBaseDirectory);
                     log.info("Copy " + sourcePath);
                     try {
                         sshGateway.copyFile(sourcePath, remotePath);
