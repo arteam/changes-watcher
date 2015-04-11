@@ -2,6 +2,7 @@ package com.github.arteam.changes.watcher;
 
 import com.github.arteam.changes.watcher.conf.Config;
 import com.github.arteam.changes.watcher.conf.RemoteTarget;
+import com.github.arteam.changes.watcher.conf.Target;
 import org.dumb.yaml.Yaml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +27,6 @@ public class Main {
 
     private static final Logger log = LoggerFactory.getLogger((Class) Main.class);
 
-    private SshGateway sshGateway = new SshGateway();
-
     /**
      * Path of watch keys
      * They are needed because watcher service returns only relative paths
@@ -43,11 +42,19 @@ public class Main {
         if (args.length == 1) {
             configLocation = args[0];
         }
+
+        SshGateway sshGateway = null;
+        RemoteTarget remote = null;
+
         Config config = new Yaml().parse(new File(configLocation), Config.class);
-        RemoteTarget remote = config.remote;
-        log.info("Connecting to a remote host: " + remote.host);
-        sshGateway.connect(remote.host, remote.username, remote.password);
-        log.info("Done!");
+        if (config.active == Target.REMOTE) {
+            sshGateway = new SshGateway();
+            remote = config.remote;
+
+            log.info("Connecting to a remote host: " + remote.host);
+            sshGateway.connect(remote.host, remote.username, remote.password);
+            log.info("Done!");
+        }
 
         WatchService watchService = FileSystems.getDefault().newWatchService();
         log.info("Starting watcher...");
@@ -87,7 +94,9 @@ public class Main {
                 break;
             }
         }
-        sshGateway.disconnect();
+        if (sshGateway != null) {
+            sshGateway.disconnect();
+        }
     }
 
     private void watchDirectory(String directory, WatchService watchService) throws IOException {
