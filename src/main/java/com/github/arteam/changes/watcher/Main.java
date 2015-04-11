@@ -79,13 +79,25 @@ public class Main {
                 if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                     // Get absolute path of changed source file
                     String sourcePath = paths.get(watchKey).resolve(eventPath).toString();
-                    String remotePath = sourcePath.replaceAll(config.monitoredDirectory, remote.remoteBaseDirectory);
-                    log.info("Copy " + sourcePath);
-                    try {
-                        sshGateway.copyFile(sourcePath, remotePath);
-                        log.info("Copied to remote path " + remotePath);
-                    } catch (Exception e) {
-                        log.error("Unable copy file", e);
+
+                    if (config.active == Target.REMOTE) {
+                        String remotePath = sourcePath.replaceAll(config.monitoredDirectory, config.remote.remoteBaseDirectory);
+                        log.info("Copy " + sourcePath);
+                        try {
+                            sshGateway.copyFile(sourcePath, remotePath);
+                            log.info("Copied to remote path " + remotePath);
+                        } catch (Exception e) {
+                            log.error("Unable copy file", e);
+                        }
+                    } else {
+                        String remotePath = sourcePath.replaceAll(config.monitoredDirectory, config.local.targetDirectory);
+                        log.info("Copy " + sourcePath);
+                        try {
+                            Files.copy(new File(sourcePath).toPath(), new File(remotePath).toPath());
+                            log.info("Copied to remote path " + remotePath);
+                        } catch (Exception e) {
+                            log.error("Unable copy file", e);
+                        }
                     }
                 }
             }
