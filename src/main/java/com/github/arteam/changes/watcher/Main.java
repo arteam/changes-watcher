@@ -93,7 +93,7 @@ public class Main {
                         String remotePath = sourcePath.replaceAll(config.monitoredDirectory, config.local.targetDirectory);
                         log.info("Copy " + sourcePath);
                         try {
-                            Files.copy(new File(sourcePath).toPath(), new File(remotePath).toPath());
+                            Files.copy(new File(sourcePath).toPath(), new File(remotePath).toPath(), StandardCopyOption.REPLACE_EXISTING);
                             log.info("Copied to remote path " + remotePath);
                         } catch (Exception e) {
                             log.error("Unable copy file", e);
